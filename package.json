@@ -1,0 +1,13 @@
+{
+  "name": "codex-router",
+  "version": "1.0.0",
+  "description": "Codex Responses API → DeepSeek Chat Completions API 中转站",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": ["codex", "deepseek", "proxy", "responses-api", "chat-completions"],
+  "license": "MIT"
+}
