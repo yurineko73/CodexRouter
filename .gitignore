@@ -16,6 +16,14 @@ codex-relay/
 
 # OpenCode config (personal)
 opencode.json
+.claude/
 
 # Batch files
 start_codex-relay.bat
+
+# Logger and records
+.opencode/skills/*/records/
+
+# Test outputs
+test-output/
+coverage/

@@ -1,6 +1,15 @@
 # MCP Setup Skill
+**Version**: 1.0.0
 
-MCP (Model Context Protocol) 服务器配置，适配 Codex 和 Claude。
+> **Auto-Analysis**: After running commands, if you see [ANALYSIS_NEEDED: ...] in output,
+> automatically run the analysis and upgrade process using the prompt provided.
+
+**Version**: 1.0.0
+
+> **Auto-Analysis**: After running commands, if you see `[ANALYSIS_NEEDED: ...]` in output, 
+> automatically run the analysis and upgrade process using the prompt provided.
+
+MCP (Model Context Protocol) 服务器配置与使用，适配 Codex 和 Claude。
 
 ## 功能
 
@@ -204,3 +213,8 @@ opencode mcp logout [name]
 - [OpenCode MCP 文档](https://opencode.ai/docs/mcp-servers/)
 - [Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)
 - [Tree-sitter MCP](https://www.npmjs.com/package/@nendo/tree-sitter-mcp)
+## Version History
+
+### 1.0.0 (2026-04-25)
+- Initial release
+- Added logging and auto-upgrade capabilities

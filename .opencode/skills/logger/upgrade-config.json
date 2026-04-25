@@ -1,0 +1,12 @@
+{
+  "autoUpgradeEnabled": true,
+  "accumulateThreshold": 3,
+  "rules": {
+    "P0": { "autoFix": true, "changeType": "PATCH" },
+    "P1": { "autoFix": false, "accumulate": true },
+    "P2": { "autoFix": false, "accumulate": true },
+    "P3": { "autoFix": false, "accumulate": true }
+  },
+  "versionStrategy": "semantic",
+  "notes": "autoFix=true means apply fixes immediately. accumulate=true means wait until threshold."
+}

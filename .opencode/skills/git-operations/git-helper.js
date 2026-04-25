@@ -7,6 +7,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const RecordLogger = require('../logger/record-logger.js');
+const RecordAnalyzer = require('../logger/record-analyzer.js');
 
 function runGit(args) {
   try {
@@ -18,39 +20,131 @@ function runGit(args) {
 }
 
 function checkStatus() {
-  console.log('=== Git Status ===');
-  const result = runGit('status');
-  console.log(result.output);
+  const logger = new RecordLogger('git-operations');
+  logger.startCall('status');
+  
+  try {
+    console.log('=== Git Status ===');
+    const result = runGit('status');
+    logger.logStep('Git status retrieved', { outputLength: result.output.length });
+    console.log(result.output);
+    logger.endCall(true);
+    
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      const analyzer = new RecordAnalyzer('git-operations');
+      analyzer.analyze();
+    }, 0);
+    
+  } catch (e) {
+    logger.logStep(`Error: ${e.message}`);
+    logger.endCall(false, e.message);
+  }
 }
 
 function showLog(count = 5) {
-  console.log(`=== Last ${count} Commits ===`);
-  const result = runGit(`log --oneline -${count}`);
-  console.log(result.output);
+  const logger = new RecordLogger('git-operations');
+  logger.startCall('log', { count });
+  
+  try {
+    console.log(`=== Last ${count} Commits ===`);
+    const result = runGit(`log --oneline -${count}`);
+    logger.logStep('Log retrieved', { outputLength: result.output.length });
+    console.log(result.output);
+    logger.endCall(true);
+    
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      const analyzer = new RecordAnalyzer('git-operations');
+      analyzer.analyze();
+    }, 0);
+    
+  } catch (e) {
+    logger.logStep(`Error: ${e.message}`);
+    logger.endCall(false, e.message);
+  }
 }
 
 function diffCheck(target = 'HEAD') {
-  console.log(`=== Diff vs ${target} ===`);
-  const result = runGit(`diff ${target} --stat`);
-  console.log(result.output);
+  const logger = new RecordLogger('git-operations');
+  logger.startCall('diff', { target });
+  
+  try {
+    console.log(`=== Diff vs ${target} ===`);
+    const result = runGit(`diff ${target} --stat`);
+    logger.logStep('Diff retrieved', { outputLength: result.output.length });
+    console.log(result.output);
+    logger.endCall(true);
+    
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      const analyzer = new RecordAnalyzer('git-operations');
+      analyzer.analyze();
+    }, 0);
+    
+  } catch (e) {
+    logger.logStep(`Error: ${e.message}`);
+    logger.endCall(false, e.message);
+  }
 }
 
 function commitChanges(message) {
-  if (!message) {
-    console.error('Error: Commit message required');
-    process.exit(1);
+  const logger = new RecordLogger('git-operations');
+  logger.startCall('commit', { message });
+  
+  try {
+    if (!message) {
+      console.error('Error: Commit message required');
+      logger.endCall(false, 'No commit message');
+      process.exit(1);
+    }
+    
+    console.log('=== Staging all changes ===');
+    logger.logStep('Staging all changes');
+    runGit('add .');
+    
+    console.log('=== Creating commit ===');
+    logger.logStep('Creating commit');
+    const result = runGit(`commit -m "${message}"`);
+    logger.logStep('Commit created', { outputLength: result.output.length });
+    console.log(result.output);
+    
+    logger.endCall(true);
+    
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      const analyzer = new RecordAnalyzer('git-operations');
+      analyzer.analyze();
+    }, 0);
+    
+  } catch (e) {
+    logger.logStep(`Error: ${e.message}`);
+    logger.endCall(false, e.message);
   }
-  console.log('=== Staging all changes ===');
-  runGit('add .');
-  console.log('=== Creating commit ===');
-  const result = runGit(`commit -m "${message}"`);
-  console.log(result.output);
 }
 
 function pushToRemote(remote = 'origin', branch = 'master') {
-  console.log(`=== Pushing to ${remote}/${branch} ===`);
-  const result = runGit(`push ${remote} ${branch}`);
-  console.log(result.output);
+  const logger = new RecordLogger('git-operations');
+  logger.startCall('push', { remote, branch });
+  
+  try {
+    console.log(`=== Pushing to ${remote}/${branch} ===`);
+    logger.logStep('Executing git push');
+    const result = runGit(`push ${remote} ${branch}`);
+    logger.logStep('Push completed', { outputLength: result.output.length });
+    console.log(result.output);
+    logger.endCall(true);
+    
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      const analyzer = new RecordAnalyzer('git-operations');
+      analyzer.analyze();
+    }, 0);
+    
+  } catch (e) {
+    logger.logStep(`Error: ${e.message}`);
+    logger.endCall(false, e.message);
+  }
 }
 
 // CLI usage

@@ -1,5 +1,10 @@
 # File Cleanup Skill
 
+**Version**: 1.0.0
+
+> **Auto-Analysis**: After running commands, if you see `[ANALYSIS_NEEDED: ...]` in output, 
+> automatically run the analysis and upgrade process using the prompt provided.
+
 通用文件清理，适配 Codex 和 Claude。
 
 ## 功能
@@ -128,6 +133,13 @@ Thumbs.db
 # Personal config
 opencode.json
 .claude/
+
+# Logger and records
+.opencode/skills/*/records/
+
+# Test outputs
+test-output/
+coverage/
 ```
 
 ## 与 AI 协作
@@ -163,49 +175,6 @@ opencode.json
 6. 执行清理并提交
 ```
 
-## 清理脚本
-
-### PowerShell 清理脚本
-
-```powershell
-# cleanup.ps1
-param([string]$Path = ".")
-
-$tempExtensions = @("tmp", "bak", "orig", "cjs", "mjs")
-$testPatterns = @("_test.*", "test-*.", "*_test.*")
-
-Write-Host "Cleaning $Path..."
-
-foreach ($ext in $tempExtensions) {
-    $files = Get-ChildItem -Path $Path -Recurse -Filter "*.$ext" -File
-    foreach ($file in $files) {
-        Write-Host "  Deleting: $($file.FullName)"
-        Remove-Item -Path $file.FullName -Force
-    }
-}
-
-Write-Host "Done!"
-```
-
-### Bash 清理脚本
-
-```bash
-#!/bin/bash
-# cleanup.sh
-PATH="${1:-.}"
-
-echo "Cleaning $PATH..."
-
-# Remove temp files
-find "$PATH" -type f \( -name "*.tmp" -o -name "*.bak" -o -name "*.orig" \) -delete
-
-# Remove test scripts (uncomment to enable)
-# find "$PATH" -type f -name "_test.*" -delete
-# find "$PATH" -type f -name "test-*" -delete
-
-echo "Done!"
-```
-
 ## 注意事项
 
 - 删除前先评估文件是否必需
@@ -219,3 +188,9 @@ echo "Done!"
 - [Gitignore 文档](https://git-scm.com/docs/gitignore)
 - [Node.js .gitignore 模板](https://github.com/github/gitignore/blob/master/Node.gitignore)
 - [清理 Node.js 项目](https://medium.com/@alishahid_10136/how-to-clean-up-your-node-js-project-8e635d72453)
+
+## Version History
+
+### 1.0.0 (2026-04-25)
+- Initial release
+- Added logging and auto-upgrade capabilities

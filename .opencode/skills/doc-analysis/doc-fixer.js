@@ -6,6 +6,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const RecordLogger = require('../logger/record-logger.js');
+const RecordAnalyzer = require('../logger/record-analyzer.js');
 
 /**
  * Analyze document accuracy
@@ -135,27 +137,83 @@ Examples:
 
 switch (command) {
   case 'analyze':
-    console.log(`Analyzing ${docPath}...`);
-    const issues = analyzeDocument(docPath);
-    if (issues.length === 0) {
-      console.log('No issues found.');
-    } else {
-      issues.forEach((issue, i) => {
-        console.log(`${i + 1}. Line ${issue.line} [${issue.type}]: ${issue.suggestion}`);
-      });
+    const logger = new RecordLogger('doc-analysis');
+    logger.startCall('analyze', { docPath });
+    
+    try {
+      console.log(`Analyzing ${docPath}...`);
+      logger.logStep('Starting analysis');
+      const issues = analyzeDocument(docPath);
+      logger.logStep(`Found ${issues.length} issues`);
+      
+      if (issues.length === 0) {
+        console.log('No issues found.');
+      } else {
+        issues.forEach((issue, i) => {
+          console.log(`${i + 1}. Line ${issue.line} [${issue.type}]: ${issue.suggestion}`);
+        });
+      }
+      
+      logger.endCall(true);
+      
+      // Trigger analysis asynchronously
+      setTimeout(() => {
+        const analyzer = new RecordAnalyzer('doc-analysis');
+        analyzer.analyze();
+      }, 0);
+      
+    } catch (e) {
+      logger.logStep(`Error: ${e.message}`);
+      logger.endCall(false, e.message);
     }
     break;
 
   case 'fix':
-    console.log(`Fixing ${docPath}...`);
-    const fixIssues = analyzeDocument(docPath);
-    fixDocument(docPath, fixIssues);
+    const logger = new RecordLogger('doc-analysis');
+    logger.startCall('fix', { docPath });
+    
+    try {
+      console.log(`Fixing ${docPath}...`);
+      logger.logStep('Starting fix');
+      const fixIssues = analyzeDocument(docPath);
+      logger.logStep(`Found ${fixIssues.length} issues`);
+      fixDocument(docPath, fixIssues);
+      logger.endCall(true);
+      
+      // Trigger analysis asynchronously
+      setTimeout(() => {
+        const analyzer = new RecordAnalyzer('doc-analysis');
+        analyzer.analyze();
+      }, 0);
+      
+    } catch (e) {
+      logger.logStep(`Error: ${e.message}`);
+      logger.endCall(false, e.message);
+    }
     break;
 
   case 'report':
-    console.log(`Generating report for ${docPath}...`);
-    const reportIssues = analyzeDocument(docPath);
-    generateReport(docPath, reportIssues);
+    const logger = new RecordLogger('doc-analysis');
+    logger.startCall('report', { docPath });
+    
+    try {
+      console.log(`Generating report for ${docPath}...`);
+      logger.logStep('Starting report generation');
+      const reportIssues = analyzeDocument(docPath);
+      logger.logStep(`Found ${reportIssues.length} issues`);
+      generateReport(docPath, reportIssues);
+      logger.endCall(true);
+      
+      // Trigger analysis asynchronously
+      setTimeout(() => {
+        const analyzer = new RecordAnalyzer('doc-analysis');
+        analyzer.analyze();
+      }, 0);
+      
+    } catch (e) {
+      logger.logStep(`Error: ${e.message}`);
+      logger.endCall(false, e.message);
+    }
     break;
 
   default:

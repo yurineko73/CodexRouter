@@ -6,6 +6,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const RecordLogger = require('../logger/record-logger.js');
+const RecordAnalyzer = require('../logger/record-analyzer.js');
 
 /**
  * Common API documentation references
@@ -163,9 +165,27 @@ switch (command) {
       console.error('Usage: node api-validator.js check <file>');
       process.exit(1);
     }
-    console.log(`Checking ${arg1}...`);
-    const codeIssues = checkCode(arg1);
-    printReport(codeIssues);
+    const logger = new RecordLogger('api-docs');
+    logger.startCall('check', { file: arg1 });
+    
+    try {
+      console.log(`Checking ${arg1}...`);
+      logger.logStep('Starting code check');
+      const codeIssues = checkCode(arg1);
+      logger.logStep(`Found ${codeIssues.length} issues`);
+      printReport(codeIssues);
+      logger.endCall(true);
+      
+      // Trigger analysis asynchronously
+      setTimeout(() => {
+        const analyzer = new RecordAnalyzer('api-docs');
+        analyzer.analyze();
+      }, 0);
+      
+    } catch (e) {
+      logger.logStep(`Error: ${e.message}`);
+      logger.endCall(false, e.message);
+    }
     break;
 
   case 'validate':
@@ -181,15 +201,35 @@ switch (command) {
     break;
 
   case 'docs':
-    console.log('\n=== API Documentation References ===');
-    Object.keys(apiDocs).forEach(api => {
-      console.log(`\n${api.toUpperCase()}:`);
-      console.log(`  Base: ${apiDocs[api].base}`);
-      console.log('  Endpoints:');
-      Object.keys(apiDocs[api].endpoints).forEach(ep => {
-        console.log(`    ${ep}: ${apiDocs[api].endpoints[ep]}`);
+    const logger = new RecordLogger('api-docs');
+    logger.startCall('docs', {});
+    
+    try {
+      console.log('\n=== API Documentation References ===');
+      logger.logStep('Starting docs display');
+      
+      Object.keys(apiDocs).forEach(api => {
+        console.log(`\n${api.toUpperCase()}:`);
+        console.log(`  Base: ${apiDocs[api].base}`);
+        console.log('  Endpoints:');
+        Object.keys(apiDocs[api].endpoints).forEach(ep => {
+          console.log(`    ${ep}: ${apiDocs[api].endpoints[ep]}`);
+        });
       });
-    });
+      
+      logger.logStep('Docs displayed');
+      logger.endCall(true);
+      
+      // Trigger analysis asynchronously
+      setTimeout(() => {
+        const analyzer = new RecordAnalyzer('api-docs');
+        analyzer.analyze();
+      }, 0);
+      
+    } catch (e) {
+      logger.logStep(`Error: ${e.message}`);
+      logger.endCall(false, e.message);
+    }
     break;
 
   default:

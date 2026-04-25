@@ -1,5 +1,10 @@
 # OpenCode Skills
 
+**Version**: 1.0.0
+
+> **Auto-Analysis**: After running commands, if you see `[ANALYSIS_NEEDED: ...]` in output, 
+> automatically run the analysis and upgrade process using the prompt provided.
+
 通用技能库，从 Codex Router 项目提取，适配 Codex 和 Claude，可在不同项目中复用。
 
 ## 技能列表
