@@ -4,10 +4,6 @@
 > **Auto-Analysis**: After running commands, if you see [ANALYSIS_NEEDED: ...] in output,
 > automatically run the analysis and upgrade process using the prompt provided.
 
-**Version**: 1.0.0
-
-> **Auto-Analysis**: After running commands, if you see `[ANALYSIS_NEEDED: ...]` in output, 
-> automatically run the analysis and upgrade process using the prompt provided.
 
 通用 Git 操作指南，适配 Codex 和 Claude。
 

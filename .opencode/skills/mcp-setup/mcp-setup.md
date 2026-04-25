@@ -4,10 +4,6 @@
 > **Auto-Analysis**: After running commands, if you see [ANALYSIS_NEEDED: ...] in output,
 > automatically run the analysis and upgrade process using the prompt provided.
 
-**Version**: 1.0.0
-
-> **Auto-Analysis**: After running commands, if you see `[ANALYSIS_NEEDED: ...]` in output, 
-> automatically run the analysis and upgrade process using the prompt provided.
 
 MCP (Model Context Protocol) 服务器配置与使用，适配 Codex 和 Claude。
 

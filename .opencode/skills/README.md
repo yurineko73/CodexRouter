@@ -17,6 +17,7 @@
 | [file-cleanup](./file-cleanup/) | 文件清理（临时文件、备份、.gitignore） | `file-cleanup.md`, `cleanup-script.sh`, `cleanup-script.ps1` |
 | [api-docs](./api-docs/) | API 文档搜索与验证 | `api-docs.md`, `api-validator.js` |
 | [mcp-setup](./mcp-setup/) | MCP 服务器配置与使用 | `mcp-setup.md`, `mcp-config.json` |
+| [file-edit](./file-edit/) | 文件编辑（插入、删除、替换、搜索） | `file-edit.md`, `file-editor.js` |
 
 ## 快速开始
 
@@ -67,6 +68,24 @@ opencode mcp add
 
 # 查看配置模板
 cat .opencode/skills/mcp-setup/mcp-config.json
+```
+
+### 7. 文件编辑
+```bash
+# 插入文本到第10行
+node .opencode/skills/file-edit/file-editor.js insert src/app.js 10 "// New"
+
+# 删除行
+node .opencode/skills/file-edit/file-editor.js delete src/utils.js 20 25
+
+# 批量替换
+node .opencode/skills/file-edit/file-editor.js replace "src/**/*.ts" "TODO" "DONE"
+
+# 搜索
+node .opencode/skills/file-edit/file-editor.js search src/app.js "function"
+
+# 撤销
+node .opencode/skills/file-edit/file-editor.js undo
 ```
 
 ## 与 AI 协作
@@ -128,9 +147,13 @@ cat .opencode/skills/mcp-setup/mcp-config.json
 ├── api-docs/
 │   ├── api-docs.md           # API 文档搜索指南
 │   └── api-validator.js      # API 验证脚本
-└── mcp-setup/
-    ├── mcp-setup.md          # MCP 配置指南
-    └── mcp-config.json       # MCP 配置模板
+├── mcp-setup/
+│   ├── mcp-setup.md          # MCP 配置指南
+│   └── mcp-config.json       # MCP 配置模板
+└── file-edit/
+    ├── file-edit.md          # 文件编辑指南
+    ├── file-editor.js        # 文件编辑脚本
+    └── file-editor.md        # CLI 参考
 ```
 
 ## 跨项目复用
