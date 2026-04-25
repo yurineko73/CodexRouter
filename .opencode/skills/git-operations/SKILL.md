@@ -1,6 +1,6 @@
 ---
 name: git-operations
-description: Git operations automation including status, staging, committing, pushing, conflict resolution, and rebasing. Compatible with Codex and Claude. Usage: node .opencode/skills/git-operations/git-helper.js <command> [args]
+description: Git operations automation including status check, staging, committing, pushing, conflict resolution, and rebasing. Compatible with Codex and Claude.
 license: MIT
 compatibility: opencode
 metadata:
@@ -8,15 +8,21 @@ metadata:
   version: "1.0.0"
 ---
 
-# Git Operations
+## What I do
 
-## 功能
+- 检查 Git 状态、查看提交历史和变更
+- 暂存和提交更改，支持修改最后一次提交
+- 推送到远程仓库，支持变基操作
+- 处理合并冲突和变基冲突
+- 分支创建、切换、删除和合并
 
-- Git 状态检查
-- 暂存和提交更改
-- 推送到远程仓库
-- 处理合并冲突
-- 变基操作
+## When to use me
+
+- 准备提交代码前检查变更内容
+- 推送代码前需要拉取远程更新
+- 遇到合并冲突需要解决
+- 需要查看项目提交历史
+- 需要批量处理 Git 操作
 
 ## 快速命令参考
 
@@ -43,25 +49,6 @@ metadata:
 | Create & switch | `git checkout -b new-branch` |
 | Delete branch | `git branch -d branch-name` |
 
-### 撤销操作
-
-| Operation | Command |
-|-----------|---------|
-| Unstage file | `git reset HEAD file` |
-| Discard changes | `git checkout -- file` |
-| Undo last commit | `git reset --soft HEAD~1` |
-| Amend commit | `git commit --amend` |
-
-### 远程操作
-
-| Operation | Command |
-|-----------|---------|
-| Add remote | `git remote add name url` |
-| View remotes | `git remote -v` |
-| Push new branch | `git push -u origin branch` |
-| Fetch updates | `git fetch origin` |
-| Pull with rebase | `git pull --rebase origin branch` |
-
 ### 冲突解决
 
 | Operation | Command |
@@ -69,63 +56,6 @@ metadata:
 | Mark resolved | `git add conflicted-file` |
 | Continue rebase | `git rebase --continue` |
 | Abort rebase | `git rebase --abort` |
-| Continue merge | `git commit` |
-| Abort merge | `git merge --abort` |
-
-## 详细命令
-
-### 检查状态
-```bash
-git status
-git log --oneline -5
-git diff HEAD
-git diff --stat HEAD
-```
-
-### 暂存和提交
-```bash
-# 暂存指定文件
-git add file1 file2
-
-# 暂存所有修改
-git add .
-
-# 提交
-git commit -m "commit message"
-
-# 修改最后一次提交
-git commit --amend
-```
-
-### 推送和拉取
-```bash
-# 推送到远程
-git push origin branch-name
-
-# 拉取远程更改
-git pull origin branch-name
-
-# 变基
-git pull --rebase origin branch-name
-```
-
-### 处理合并冲突
-```bash
-# 查看冲突文件
-git status
-
-# 手动解决冲突后标记为已解决
-git add conflicted-file
-
-# 继续变基
-git rebase --continue
-
-# 或中止变基
-git rebase --abort
-
-# 完成合并提交
-git commit -m "Merge remote changes"
-```
 
 ## 提交消息规范
 
@@ -141,19 +71,6 @@ git commit -m "Merge remote changes"
 ```
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
-
-## 与 AI 协作
-
-### Codex/Claude 提示词模板
-
-```
-请帮我：
-1. 检查 git 状态 (git status)
-2. 查看最近的提交 (git log --oneline -5)
-3. 暂存以下文件: [文件列表]
-4. 创建提交，消息为: "[type]: [message]"
-5. 推送到远程仓库
-```
 
 ## 注意事项
 
