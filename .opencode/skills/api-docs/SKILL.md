@@ -1,6 +1,11 @@
 ---
 name: api-docs
 description: API documentation search and validation that queries official docs, validates parameters, and updates project configs. Compatible with Codex and Claude. Usage: node .opencode/skills/api-docs/api-validator.js <command> [args]
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # API Docs Search

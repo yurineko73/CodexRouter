@@ -1,6 +1,11 @@
 ---
 name: doc-analysis
 description: Document analysis and accuracy validation that identifies outdated information, checks API documentation alignment, and maintains documentation sync. Compatible with Codex and Claude. Usage: node .opencode/skills/doc-analysis/doc-fixer.js <command> <path>
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # Document Analysis

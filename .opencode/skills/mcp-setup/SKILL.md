@@ -1,6 +1,11 @@
 ---
 name: mcp-setup
 description: MCP (Model Context Protocol) server configuration and usage guide. Setup Context7 for docs, Tree-sitter for code search, and other MCP servers. Compatible with Codex and Claude.
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # MCP Setup

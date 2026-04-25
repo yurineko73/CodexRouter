@@ -1,6 +1,11 @@
 ---
 name: code-review
 description: Code review automation that identifies issues, checks for API spec compliance, generates fix plans, and applies code fixes. Compatible with Codex and Claude. Usage: node .opencode/skills/code-review/code-fixer.js <command> <file>
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # Code Review
@@ -29,13 +34,6 @@ git log --oneline -10
 ```
 
 ### 2. 检查阶段
-
-#### 检查清单
-
-- [ ] 崩溃/阻塞级问题 (P0)
-- [ ] 功能错误级问题 (P1)
-- [ ] 规范/兼容性问题 (P2)
-- [ ] 优化/重构建议 (P3)
 
 #### 使用工具
 
@@ -90,6 +88,79 @@ git add .
 git commit -m "fix: ..."
 git push origin master
 ```
+
+## 审查清单
+
+### 优先级级别
+
+- **P0**: Crash/Blocker - 立即修复
+- **P1**: Functional Error - 发布前修复
+- **P2**: Spec/Compatibility - 尽快修复
+- **P3**: Optimization - 时间允许时修复
+
+### P0 - 崩溃/阻塞级
+
+- [ ] 空指针解引用
+- [ ] 未定义函数/变量访问
+- [ ] 语法错误
+- [ ] 缺少必需的导入
+- [ ] 无限循环
+- [ ] 内存泄漏（长运行进程）
+
+### P1 - 功能错误级
+
+- [ ] API 参数映射错误
+- [ ] 缺少错误处理
+- [ ] 事件序列错误
+- [ ] 数据转换错误
+- [ ] 缺少回退逻辑
+- [ ] 参数验证缺失
+
+### P2 - 规范/兼容性
+
+- [ ] API 响应格式不匹配
+- [ ] 缺少必需字段
+- [ ] 默认值错误
+- [ ] 缺少特性开关
+- [ ] 使用已弃用的 API
+- [ ] 版本兼容性问题
+
+### P3 - 优化级
+
+- [ ] 重复代码/函数
+- [ ] 缺少超时处理
+- [ ] 资源泄漏（未关闭的流等）
+- [ ] 缺少日志/调试信息
+- [ ] 算法效率低
+- [ ] 缺少输入验证
+
+### 项目特定清单
+
+#### Node.js/JavaScript
+
+- [ ] `require` vs `import` 一致性
+- [ ] 回调/Promise/async-await 一致性
+- [ ] 异步函数错误处理
+- [ ] 流正确清理
+- [ ] 事件监听器泄漏
+
+#### API 代理项目
+
+- [ ] 请求/响应格式转换正确
+- [ ] 流式支持完整
+- [ ] 错误响应格式符合规范
+- [ ] 上游请求超时处理
+- [ ] 客户端断开连接处理
+- [ ] API 文档与实现匹配
+
+#### DeepSeek/OpenAI API
+
+- [ ] `reasoning_effort` 映射正确
+- [ ] `thinking` 模式正确配置
+- [ ] `stream_options` 设置获取用量信息
+- [ ] `completion_tokens_details` 透传
+- [ ] `response_format` 处理正确
+- [ ] 工具调用处理完整
 
 ## 审查模板
 

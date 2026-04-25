@@ -1,6 +1,11 @@
 ---
 name: file-cleanup
 description: File cleanup automation that identifies temp files, backups, test scripts, removes untracked files, and updates gitignore. Compatible with Codex and Claude. Usage: bash cleanup-script.sh <path> or powershell cleanup-script.ps1 -Path <path>
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # File Cleanup

@@ -1,6 +1,11 @@
 ---
 name: git-operations
 description: Git operations automation including status, staging, committing, pushing, conflict resolution, and rebasing. Compatible with Codex and Claude. Usage: node .opencode/skills/git-operations/git-helper.js <command> [args]
+license: MIT
+compatibility: opencode
+metadata:
+  audience: developers
+  version: "1.0.0"
 ---
 
 # Git Operations
@@ -13,7 +18,61 @@ description: Git operations automation including status, staging, committing, pu
 - 处理合并冲突
 - 变基操作
 
-## 常用命令
+## 快速命令参考
+
+### 基础操作
+
+| Operation | Command |
+|-----------|---------|
+| Check status | `git status` |
+| View history | `git log --oneline -10` |
+| View changes | `git diff` |
+| Add files | `git add file1 file2` |
+| Add all | `git add .` |
+| Commit | `git commit -m "message"` |
+| Push | `git push origin branch` |
+| Pull | `git pull origin branch` |
+
+### 分支操作
+
+| Operation | Command |
+|-----------|---------|
+| List branches | `git branch` |
+| Create branch | `git branch new-branch` |
+| Switch branch | `git checkout branch` |
+| Create & switch | `git checkout -b new-branch` |
+| Delete branch | `git branch -d branch-name` |
+
+### 撤销操作
+
+| Operation | Command |
+|-----------|---------|
+| Unstage file | `git reset HEAD file` |
+| Discard changes | `git checkout -- file` |
+| Undo last commit | `git reset --soft HEAD~1` |
+| Amend commit | `git commit --amend` |
+
+### 远程操作
+
+| Operation | Command |
+|-----------|---------|
+| Add remote | `git remote add name url` |
+| View remotes | `git remote -v` |
+| Push new branch | `git push -u origin branch` |
+| Fetch updates | `git fetch origin` |
+| Pull with rebase | `git pull --rebase origin branch` |
+
+### 冲突解决
+
+| Operation | Command |
+|-----------|---------|
+| Mark resolved | `git add conflicted-file` |
+| Continue rebase | `git rebase --continue` |
+| Abort rebase | `git rebase --abort` |
+| Continue merge | `git commit` |
+| Abort merge | `git merge --abort` |
+
+## 详细命令
 
 ### 检查状态
 ```bash
