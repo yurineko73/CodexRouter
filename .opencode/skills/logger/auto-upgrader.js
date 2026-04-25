@@ -1,6 +1,6 @@
 /**
  * Auto Upgrader - Applies improvements based on AI analysis
- * Directy modifies files (js/md) and bumps version
+ * Directly modifies files (js/md) and bumps version in SKILL.md
  */
 
 const fs = require('fs');
@@ -38,13 +38,13 @@ class AutoUpgrader {
 
     console.log(`Upgrading ${skillName} with change type: ${decision.changeType}`);
 
-    // Bump version in md file
+    // Bump version in SKILL.md
     const newVersion = this._bumpVersion(skillName, decision.changeType);
 
     // Apply improvements to files
     this._applyImprovements(skillName, aiResult.improvements);
 
-    // Update version history in md file
+    // Update version history in SKILL.md
     this._updateVersionHistory(skillName, newVersion, aiResult.improvements, decision.changeType);
 
     return { upgraded: true, newVersion, changeType: decision.changeType };
@@ -77,25 +77,29 @@ class AutoUpgrader {
   }
 
   /**
-   * Bump version in skill's md file
+   * Bump version in skill's SKILL.md (YAML frontmatter format)
    * @private
    */
   _bumpVersion(skillName, changeType) {
-    const mdPath = path.join(__dirname, '..', skillName, `${skillName}.md`);
+    const mdPath = path.join(__dirname, '..', skillName, 'SKILL.md');
     if (!fs.existsSync(mdPath)) {
-      console.warn(`MD file not found: ${mdPath}`);
+      console.warn(`SKILL.md not found: ${mdPath}`);
       return null;
     }
 
     let content = fs.readFileSync(mdPath, 'utf8');
-    const versionMatch = content.match(/\*\*Version\*\*: (\d+)\.(\d+)\.(\d+)/);
+
+    // Match version in YAML frontmatter: metadata:\n  version: "1.0.0"
+    const versionMatch = content.match(/version:\s*"?(\d+)\.(\d+)\.(\d+)"?/);
     if (!versionMatch) {
-      console.warn('Version not found in md file, starting at 1.0.0');
+      console.warn('Version not found in SKILL.md frontmatter, starting at 1.0.0');
       return '1.0.0';
     }
 
     let [_, major, minor, patch] = versionMatch;
-    major = parseInt(major); minor = parseInt(minor); patch = parseInt(patch);
+    major = parseInt(major);
+    minor = parseInt(minor);
+    patch = parseInt(patch);
 
     switch (changeType) {
       case 'MAJOR': major++; minor = 0; patch = 0; break;
@@ -106,13 +110,13 @@ class AutoUpgrader {
 
     const newVersion = `${major}.${minor}.${patch}`;
 
-    // Update version in md
-    const newContent = content.replace(
-      /\*\*Version\*\*: \d+\.\d+\.\d+/,
-      `**Version**: ${newVersion}`
+    // Update version in frontmatter (handle both quoted and unquoted)
+    let newContent = content.replace(
+      /version:\s*"?\d+\.\d+\.\d+"?/,
+      `version: "${newVersion}"`
     );
-    fs.writeFileSync(mdPath, newContent, 'utf8');
 
+    fs.writeFileSync(mdPath, newContent, 'utf8');
     console.log(`Version bumped to ${newVersion}`);
     return newVersion;
   }
@@ -181,20 +185,17 @@ class AutoUpgrader {
   }
 
   /**
-   * Update version history in md file
+   * Update version history in SKILL.md
    * @private
    */
   _updateVersionHistory(skillName, newVersion, improvements, changeType) {
-    const mdPath = path.join(__dirname, '..', skillName, `${skillName}.md`);
+    const mdPath = path.join(__dirname, '..', skillName, 'SKILL.md');
     if (!fs.existsSync(mdPath)) return;
 
     let content = fs.readFileSync(mdPath, 'utf8');
 
-    // Find or create Version History section
-    let historySection = '## Version History\n\n';
-    if (!content.includes('## Version History')) {
-      content += '\n\n' + historySection;
-    }
+    // Check if Version History section exists
+    let hasHistorySection = content.includes('## Version History');
 
     // Build new entry
     const date = new Date().toISOString().split('T')[0];
@@ -206,16 +207,17 @@ class AutoUpgrader {
     });
     entry += '\n';
 
-    // Insert after "## Version History"
-    if (content.includes('## Version History')) {
+    if (hasHistorySection) {
+      // Insert after "## Version History"
       const insertPos = content.indexOf('## Version History') + '## Version History\n'.length;
       content = content.slice(0, insertPos) + entry + content.slice(insertPos);
     } else {
-      content += entry;
+      // Append Version History section at the end
+      content += '\n\n## Version History\n\n' + entry;
     }
 
     fs.writeFileSync(mdPath, content, 'utf8');
-    console.log(`Version history updated in ${skillName}.md`);
+    console.log(`Version history updated in ${skillName}/SKILL.md`);
   }
 
   /**
