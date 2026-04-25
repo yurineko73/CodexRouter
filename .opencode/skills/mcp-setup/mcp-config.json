@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://context7.com/mcp",
+      "enabled": true,
+      "description": "Documentation search and query"
+    },
+    "tree-sitter": {
+      "type": "local",
+      "command": "npx",
+      "args": ["@nendo/tree-sitter-mcp"],
+      "enabled": true,
+      "description": "Code search and analysis"
+    },
+    "gh_grep": {
+      "type": "remote",
+      "url": "https://grep.vercel.ai/mcp",
+      "enabled": false,
+      "description": "GitHub code search"
+    },
+    "node-debugger": {
+      "type": "local",
+      "command": "node",
+      "args": ["/path/to/node-debugger-mcp/dist/index.js"],
+      "enabled": false,
+      "description": "Node.js debugging tools"
+    }
+  },
+  "permission": {
+    "context7_*": "allow",
+    "tree-sitter_*": "allow",
+    "gh_grep_*": "ask",
+    "node-debugger_*": "ask"
+  }
+}
