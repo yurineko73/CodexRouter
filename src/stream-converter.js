@@ -374,8 +374,8 @@ class StreamConverter {
     }
 
     // 判断最终状态
-    const finalStatus = this.toolCalls.length > 0 ? 'incomplete' : 'completed';
-    const incompleteDetails = this.toolCalls.length > 0
+    const finalStatus = this.toolCalls.length > 0 || this.finishReason === 'tool_calls' ? 'incomplete' : 'completed';
+    const incompleteDetails = this.toolCalls.length > 0 || this.finishReason === 'tool_calls'
       ? { reason: 'tool_calls' }
       : this.finishReason === 'length'
         ? { reason: 'max_output_tokens' }
@@ -393,6 +393,7 @@ class StreamConverter {
         input_tokens: this.usage?.prompt_tokens || 0,
         output_tokens: this.usage?.completion_tokens || 0,
         total_tokens: this.usage?.total_tokens || 0,
+        ...(this.usage?.completion_tokens_details ? { output_tokens_details: { reasoning_tokens: this.usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
       },
       incomplete_details: incompleteDetails,
     });

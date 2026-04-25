@@ -110,7 +110,7 @@ function convertInputToMessages(input, instructions) {
             arguments: tc.arguments || '{}',
           },
         })),
-        content: pendingToolCalls._textContent || null,
+        content: null,
       };
       // 有工具调用时，DeepSeek 要求回传 reasoning_content
       if (pendingReasoningContent) {

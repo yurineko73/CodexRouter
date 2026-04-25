@@ -75,7 +75,7 @@ export function convertResponse(chatBody, originalModel, originalResponseFormat)
       model: originalModel || model,
       output: [],
       usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
-      ...(usage?.completion_tokens_details ? { output_token_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
+      ...(usage?.completion_tokens_details ? { output_tokens_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
     };
   }
 
@@ -98,7 +98,7 @@ export function convertResponse(chatBody, originalModel, originalResponseFormat)
       input_tokens: usage?.prompt_tokens || 0,
       output_tokens: usage?.completion_tokens || 0,
       total_tokens: usage?.total_tokens || 0,
-      ...(usage?.completion_tokens_details ? { output_token_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
+      ...(usage?.completion_tokens_details ? { output_tokens_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
     },
     // 浠ヤ笅瀛楁嶄负 Responses API 瑙勮寖琛ュ厖
     incomplete_details: choice.finish_reason === 'length' ? { reason: 'max_output_tokens' } : null,
