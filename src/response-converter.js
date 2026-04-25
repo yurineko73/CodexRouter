@@ -1,24 +1,18 @@
-/**
- * Codex Router — 响应转换器（非流式）
- * 将 Chat Completions API 响应体 转换为 Responses API 响应体
+﻿/**
+ * Codex Router - 鍝嶅簲杞化鍣ㄦ湭娴佺嚎寮忥級
+ * 灏咺hat Completions API 鍝嶅簲浣滃⇒ Responses API 鍝嶅簲浣?
  */
 
 import { log } from './logger.js';
+import { genId } from './util.js';
 
 /**
- * 生成响应 ID
+ * 灏咺hat Completions 鐨刟ssistant message 杞化涓篬esponses 鐨凮utput items
  */
-function genId(prefix = 'resp') {
-  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
-
-/**
- * 将 Chat Completions 的 assistant message 转换为 Responses 的 output items
- */
-function convertAssistantMessage(message, model) {
+function convertAssistantMessage(message, model, originalResponseFormat) {
   const outputItems = [];
 
-  // DeepSeek 推理内容 → reasoning output item
+  // DeepSeek 鎺ㄧ悊鍐呭瓧 -鑷昏皟 output item
   if (message.reasoning_content) {
     outputItems.push({
       type: 'reasoning',
@@ -32,7 +26,7 @@ function convertAssistantMessage(message, model) {
     });
   }
 
-  // Tool calls → function_call output items
+  // Tool calls -鑷昏皟 function_call output items
   if (message.tool_calls && message.tool_calls.length > 0) {
     for (const tc of message.tool_calls) {
       outputItems.push({
@@ -45,7 +39,7 @@ function convertAssistantMessage(message, model) {
     }
   }
 
-  // 文本内容 → message output item
+  // 鏂囨湰鍐呭瓧 -鑷昏皟 message output item
   if (message.content) {
     outputItems.push({
       type: 'message',
@@ -66,13 +60,13 @@ function convertAssistantMessage(message, model) {
 }
 
 /**
- * 主转换函数：Chat Completions API Response → Responses API Response
+ * 涓昏浆鎹濮 含鏁帮細Chat Completions API Response 鈫→ Responses API Response
  */
-export function convertResponse(chatBody, originalModel) {
+export function convertResponse(chatBody, originalModel, originalResponseFormat) {
   const { id, model, choices, usage, created } = chatBody;
 
   if (!choices || choices.length === 0) {
-    // 空响应
+    // 绌哄搷搴?
     return {
       id: genId('resp'),
       object: 'response',
@@ -81,12 +75,13 @@ export function convertResponse(chatBody, originalModel) {
       model: originalModel || model,
       output: [],
       usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
+      ...(usage?.completion_tokens_details ? { output_token_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
     };
   }
 
   const choice = choices[0];
   const message = choice.message || {};
-  const outputItems = convertAssistantMessage(message, originalModel || model);
+  const outputItems = convertAssistantMessage(message, originalModel || model, originalResponseFormat);
 
   const response = {
     id: genId('resp'),
@@ -103,8 +98,9 @@ export function convertResponse(chatBody, originalModel) {
       input_tokens: usage?.prompt_tokens || 0,
       output_tokens: usage?.completion_tokens || 0,
       total_tokens: usage?.total_tokens || 0,
+      ...(usage?.completion_tokens_details ? { output_token_details: { reasoning_tokens: usage.completion_tokens_details.reasoning_tokens || 0 } } : {}),
     },
-    // 以下字段按 Responses API 规范填充
+    // 浠ヤ笅瀛楁嶄负 Responses API 瑙勮寖琛ュ厖
     incomplete_details: choice.finish_reason === 'length' ? { reason: 'max_output_tokens' } : null,
     instructions: null,
     max_output_tokens: null,
@@ -112,7 +108,7 @@ export function convertResponse(chatBody, originalModel) {
     reasoning: null,
     store: false,
     temperature: null,
-    text: { format: { type: 'text' } },
+    text: { format: originalResponseFormat || { type: 'text' } },
     tool_choice: 'auto',
     tools: [],
     top_p: null,

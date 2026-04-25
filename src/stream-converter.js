@@ -10,12 +10,9 @@
  */
 
 import { log } from './logger.js';
+import { genId } from './util.js';
 
 let respCounter = 0;
-
-function genId(prefix = 'resp') {
-  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
 
 /**
  * 创建 SSE 事件字符串
@@ -96,6 +93,7 @@ class StreamConverter {
         id: this.responseId,
         object: 'response',
         status: 'in_progress',
+        model: this.originalModel,
       });
     }
 
@@ -141,11 +139,7 @@ class StreamConverter {
 
       if (!this.reasoningPartStarted) {
         this.reasoningPartStarted = true;
-        events += sseEvent('response.content_part.added', {
-          output_index: this.reasoningIndex,
-          content_index: 0,
-          part: { type: 'summary_text', text: '' },
-        });
+        // P1-2: Reasoning uses reasoning_summary_text.delta, not content_part.added
       }
 
       events += sseEvent('response.reasoning_summary_text.delta', {
@@ -159,7 +153,8 @@ class StreamConverter {
     if (delta.content) {
       this.fullContent += delta.content;
 
-      if (!this.messageStarted) {
+      // P2-5: Handle delta.role from DeepSeek
+      if (delta.role === 'assistant' && !this.messageStarted) {
         this.messageStarted = true;
         this.messageOutputIndex = this.reasoningStarted
           ? this.reasoningIndex + 1
@@ -285,11 +280,7 @@ class StreamConverter {
         content_index: 0,
         text: this.reasoningContent,
       });
-      events += sseEvent('response.content_part.done', {
-        output_index: this.reasoningIndex,
-        content_index: 0,
-        part: { type: 'summary_text', text: this.reasoningContent },
-      });
+      // P1-2: Reasoning does not use content_part.done events
     }
 
     if (this.reasoningStarted) {

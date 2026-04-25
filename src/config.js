@@ -44,6 +44,7 @@ export const config = {
   modelMap: parseModelMap(process.env.MODEL_MAP || ''),
 
   /** 日志级别: debug | info | warn | error */
+  upstreamTimeout: parseInt(process.env.UPSTREAM_TIMEOUT || '120000', 10),
   logLevel: process.env.LOG_LEVEL || 'info',
 };
 

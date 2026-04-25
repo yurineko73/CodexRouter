@@ -8,3 +8,14 @@ $null
 test-*
 codex-relay/
 
+# Ignore temporary scripts and backups
+*.cjs
+*.mjs
+*.ps1
+*.orig
+
+# OpenCode config (personal)
+opencode.json
+
+# Batch files
+start_codex-relay.bat

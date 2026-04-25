@@ -7,6 +7,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { URL } from 'node:url';
 import { config } from './config.js';
+// Note: upstreamTimeout defaults to 120000 in config.js
 import { log } from './logger.js';
 import { convertRequest } from './request-converter.js';
 import { convertResponse } from './response-converter.js';
@@ -76,6 +77,11 @@ function forwardRequest(path, method, headers, body) {
 
     upstreamReq.on('error', (e) => {
       reject(new Error(`Upstream request failed: ${e.message}`));
+    });
+
+    // Request timeout (default 120s)
+    upstreamReq.setTimeout(config.upstreamTimeout || 120000, () => {
+      upstreamReq.destroy(new Error('Upstream request timed out'));
     });
 
     if (body) {
@@ -182,13 +188,12 @@ async function handleResponses(req, res) {
         'Access-Control-Allow-Origin': '*',
       });
 
-      // 构造一个带错误的 response
+      // Proper SSE error sequence: created(in_progress) -> failed -> completed(failed)
       const respId = `resp_${Date.now().toString(36)}`;
-      const errorResp = {
+      const baseErrorResp = {
         id: respId,
         object: 'response',
         created_at: Math.floor(Date.now() / 1000),
-        status: 'failed',
         model: originalModel,
         output: [],
         error: {
@@ -199,8 +204,11 @@ async function handleResponses(req, res) {
         usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
       };
 
-      res.write(`event: response.created\ndata: ${JSON.stringify(errorResp)}\n\n`);
-      res.write(`event: response.completed\ndata: ${JSON.stringify(errorResp)}\n\n`);
+      res.write(`event: response.created\ndata: ${JSON.stringify({ type: 'response.created', response: { ...baseErrorResp, status: 'in_progress' } })}\n\n`);
+
+      res.write(`event: response.failed\ndata: ${JSON.stringify({ type: 'response.failed', response: { id: respId, object: 'response', status: 'failed', model: originalModel, error: baseErrorResp.error } })}\n\n`);
+
+      res.write(`event: response.completed\ndata: ${JSON.stringify({ type: 'response.completed', response: { ...baseErrorResp, status: 'failed' } })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
     } else {
@@ -373,6 +381,7 @@ async function handleResponses(req, res) {
     req.on('close', () => {
       if (!streamEnded) {
         log.info('Client disconnected prematurely');
+      if (upstreamRes && !upstreamRes.destroyed) upstreamRes.destroy();
         streamEnded = true;
       }
     });
@@ -386,7 +395,9 @@ async function handleResponses(req, res) {
 
     try {
       const chatResponse = JSON.parse(body);
-      const responsesResult = convertResponse(chatResponse, originalModel);
+      // Pass original text.format to preserve it in the response (P2-3 fix)
+      const originalResponseFormat = requestBody.text?.format;
+      const responsesResult = convertResponse(chatResponse, originalModel, originalResponseFormat);
       sendJson(res, 200, responsesResult);
       log.info(`Response sent: ${responsesResult.output?.length || 0} output items, ${responsesResult.usage?.total_tokens || 0} tokens`);
     } catch (e) {

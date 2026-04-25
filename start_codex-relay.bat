@@ -10,10 +10,10 @@ echo.
 
 :: ==================== 配置区域 ====================
 :: 【重要】将等号后面的内容替换为你的真实 DeepSeek API Key
-set DEEPSEEK_API_KEY=sk-f1592e3e78ae4894bc09cd38662686ae
+set DEEPSEEK_API_KEY=sk-QW0hvbia2nvzjjJMKLp0ALOrhC0DIcONabEFYbEZVzKUDD21
 
 set CODEX_RELAY_PORT=4446
-set CODEX_RELAY_UPSTREAM=https://api.deepseek.com/v1
+set CODEX_RELAY_UPSTREAM=https://api.zaixianshauti.top/v1
 :: ==================================================
 
 :: 验证 API Key 配置

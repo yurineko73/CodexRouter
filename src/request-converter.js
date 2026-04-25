@@ -30,16 +30,22 @@ function mapRole(role) {
  * DeepSeek 不支持 encrypted_content，但可以用 summary 文本作为 reasoning_content 回传
  */
 function extractReasoningSummary(item) {
-  if (!item.summary || !Array.isArray(item.summary)) return null;
-  const texts = [];
-  for (const s of item.summary) {
-    if (s.type === 'summary_text' && s.text) {
-      texts.push(s.text);
+  // First try summary text
+  if (item.summary && Array.isArray(item.summary)) {
+    const texts = [];
+    for (const s of item.summary) {
+      if (s.type === 'summary_text' && s.text) {
+        texts.push(s.text);
+      }
     }
+    if (texts.length > 0) return texts.join('\n');
   }
-  return texts.length > 0 ? texts.join('\n') : null;
+  // Fallback: if Codex sends encrypted_content without summary, use placeholder
+  if (item.encrypted_content) {
+    return `[reasoning: ` + item.encrypted_content.slice(0, 200) + `]`;
+  }
+  return null;
 }
-
 /**
  * 将 Responses API 的 input 转换为 Chat Completions 的 messages 数组
  */
@@ -408,22 +414,12 @@ function convertTextFormat(text, thinkingEnabled) {
 
   switch (fmt.type) {
     case 'json_schema': {
-      // DeepSeek 不支持 json_schema 类型
-      // 降级为 json_object（至少保证输出是合法 JSON）
-      if (thinkingEnabled) {
-        // 思考模式下 json_object 也可能不兼容，直接跳过
-        log.info('Skipping json_schema response_format (DeepSeek does not support it, and thinking mode is active)');
-        return undefined;
-      }
-      log.info('DeepSeek does not support json_schema response_format, downgrading to json_object');
+      // DeepSeek does not support json_schema in any mode; downgrade to json_object
+      log.warn('DeepSeek does not support json_schema response_format, downgrading to json_object');
       return { type: 'json_object' };
     }
     case 'json_object': {
-      // 思考模式下 json_object 可能不被支持
-      if (thinkingEnabled) {
-        log.info('Skipping json_object response_format in thinking mode (may not be supported)');
-        return undefined;
-      }
+      // DeepSeek supports json_object in both thinking and non-thinking modes
       return { type: 'json_object' };
     }
     case 'text':
@@ -445,6 +441,14 @@ function convertTextFormat(text, thinkingEnabled) {
  * - thinking 直接放请求体（非 extra_body）
  * - extra_body 内容需要展开到请求体顶级
  */
+
+function mapReasoningEffort(effort) {
+  if (!effort) return undefined;
+  // DeepSeek only supports high and max; map other values
+  var map = { low: 'high', medium: 'high', high: 'high', xhigh: 'max', max: 'max' };
+  return map[effort] || effort;
+}
+
 export function convertRequest(responsesBody) {
   const {
     model,
@@ -502,6 +506,10 @@ export function convertRequest(responsesBody) {
   if (stop != null) chatBody.stop = stop;
   if (user != null) chatBody.user = user;
   if (responseFormat) chatBody.response_format = responseFormat;
+  // Automatically include stream_options to get usage in streaming responses
+  if (chatBody.stream) {
+    chatBody.stream_options = { include_usage: true };
+  }
   if (convertedTools && convertedTools.length > 0) {
     chatBody.tools = convertedTools;
     if (tool_choice != null) {
@@ -521,11 +529,13 @@ export function convertRequest(responsesBody) {
   // thinking 是 DeepSeek 的顶级请求参数（不是 extra_body）
   if (reasoning) {
     if (reasoning.effort) {
-      chatBody.reasoning_effort = reasoning.effort;
+      chatBody.reasoning_effort = mapReasoningEffort(reasoning.effort);
     }
     chatBody.thinking = { type: 'enabled' };
+  } else {
+    // P2-1: Explicitly disable thinking when no reasoning parameter
+    chatBody.thinking = { type: 'disabled' };
   }
-
   // 处理 extra_body：展开到请求体顶级
   // Codex CLI 可能通过 extra_body 传递 thinking、reasoning_effort 等参数
   // DeepSeek 不认识 extra_body，必须将其内容提取到顶级
