@@ -1,0 +1,3 @@
+# Skill records
+*.json
+!.gitignore
