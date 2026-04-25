@@ -11,7 +11,6 @@
 |---|---|
 | **Base URL (OpenAI)** | `https://api.deepseek.com` |
 | **Base URL (Anthropic)** | `https://api.deepseek.com/anthropic` |
-| **Beta 端点** | `https://api.deepseek.com/beta` |
 | **Chat 端点** | `POST /chat/completions` |
 | **认证方式** | `Authorization: Bearer <API_KEY>` |
 
@@ -71,6 +70,7 @@ POST https://api.deepseek.com/chat/completions
 | ↳ (指定工具模式) | `object` | — | 格式：`{"type":"function","function":{"name":"..."}}` |
 | **`logprobs`** | `boolean\|null` | — | 是否返回输出 token 的对数概率 |
 | **`top_logprobs`** | `integer\|null` | — | 0~20，每个位置返回 top N 概率 token（需 `logprobs=true`） |
+| > ⚠️ 思考模式下 `logprobs`/`top_logprobs` **不会报错，但不生效** |
 
 ---
 
@@ -164,8 +164,6 @@ response = client.chat.completions.create(
 - `top_p` — 不报错，但不生效
 - `presence_penalty` — 不报错，但不生效
 - `frequency_penalty` — 不报错，但不生效
-- `logprobs` — **会报错** ❌
-- `top_logprobs` — **会报错** ❌
 
 ---
 
@@ -380,4 +378,4 @@ data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}
 3. **多轮对话中有工具调用时必须回传 reasoning_content**，否则 400 报错
 4. **assistant 消息的 reasoning_content 字段**：非工具调用场景可不传（忽略），工具调用场景必须传
 5. **max_tokens 包含思维链**：上限是思维链 + 最终回答的总长度
-6. **logprobs 在思考模式下会报错**
+6. **logprobs 在思考模式下不生效**（不报错，只是忽略）

@@ -307,8 +307,8 @@ Codex 自动在对话过长时插入此 item，将之前的对话压缩为加密
 
 | 字段 | 可选值 | 说明 |
 |------|--------|------|
-| `effort` | `"low"` / `"medium"` / `"high"` | 推理力度 |
-| `summary` | `"auto"` / `"concise"` / `"detailed"` / `"off"` | 推理摘要模式 |
+| `effort` | `"none"` / `"minimal"` / `"low"` / `"medium"` / `"high"` / `"xhigh"` | 推理力度。`gpt-5.1` 支持 `none`；`gpt-5-pro` 仅支持 `high`；`xhigh` 仅在 `gpt-5.1-codex-max` 之后版本支持 |
+| `summary` | `"auto"` / `"concise"` / `"detailed"` | 推理摘要模式 |
 
 ---
 
@@ -323,10 +323,21 @@ Codex 自动在对话过长时插入此 item，将之前的对话压缩为加密
         "name": "my_schema",
         "schema": {...}
       }
-    }
+    },
+    "verbosity": "high"
   }
 }
 ```
+
+| 字段 | 可选值 | 说明 |
+|------|--------|------|
+| `format.type` | `"text"` / `"json_schema"` / `"json_object"` / `"grammar"` / `"python"` | 输出格式 |
+| `format.json_schema.name` | `string` | JSON Schema 名称 |
+| `format.json_schema.schema` | `object` | JSON Schema 定义 |
+| `format.json_schema.strict` | `boolean` | 是否严格遵循 schema |
+| `verbosity` | `"low"` / `"medium"` / `"high"` | 控制回复详细程度 |
+
+> 注意：`"json_object"` 为旧版 JSON 模式，推荐使用 `"json_schema"`
 
 对应 Chat Completions 的 `response_format`。
 
