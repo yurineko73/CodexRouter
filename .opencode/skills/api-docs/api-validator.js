@@ -160,7 +160,7 @@ const command = process.argv[2];
 const arg1 = process.argv[3];
 
 switch (command) {
-  case 'check':
+  case 'check': {
     if (!arg1) {
       console.error('Usage: node api-validator.js check <file>');
       process.exit(1);
@@ -187,8 +187,9 @@ switch (command) {
       logger.endCall(false, e.message);
     }
     break;
+  }
 
-  case 'validate':
+  case 'validate': {
     const api = process.argv[3];
     const endpoint = process.argv[4];
     if (!api || !endpoint) {
@@ -199,8 +200,9 @@ switch (command) {
     console.log(`Validating ${api}/${endpoint}...`);
     console.log('Pass parameters as JSON object (not implemented in CLI)');
     break;
+  }
 
-  case 'docs':
+  case 'docs': {
     const logger = new RecordLogger('api-docs');
     logger.startCall('docs', {});
     
@@ -231,6 +233,7 @@ switch (command) {
       logger.endCall(false, e.message);
     }
     break;
+  }
 
   default:
     console.log(`
@@ -246,5 +249,5 @@ Commands:
 Examples:
   node api-validator.js check src/request-converter.js
   node api-validator.js docs
-  `);
+    `);
 }

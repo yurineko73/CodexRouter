@@ -98,36 +98,38 @@ switch (command) {
       console.error('Usage: node code-fixer.js check <file>');
       process.exit(1);
     }
-    const logger = new RecordLogger('code-review');
-    logger.startCall('check', { file });
-    
-    try {
-      console.log(`Checking ${file}...`);
-      logger.logStep('Starting check');
-      const issues = checkCommonIssues(file);
-      logger.logStep(`Found ${issues.length} issues`);
+    {
+      const logger = new RecordLogger('code-review');
+      logger.startCall('check', { file });
       
-      if (issues.length === 0) {
-        console.log('No issues found.');
-      } else {
-        issues.forEach((issue, i) => {
-          console.log(`${i + 1}. [${issue.type}] ${issue.description}`);
-          if (issue.suggestion) console.log(`   Suggestion: ${issue.suggestion}`);
-          if (issue.fix) console.log('   (Auto-fix available)');
-        });
+      try {
+        console.log(`Checking ${file}...`);
+        logger.logStep('Starting check');
+        const issues = checkCommonIssues(file);
+        logger.logStep(`Found ${issues.length} issues`);
+        
+        if (issues.length === 0) {
+          console.log('No issues found.');
+        } else {
+          issues.forEach((issue, i) => {
+            console.log(`${i + 1}. [${issue.type}] ${issue.description}`);
+            if (issue.suggestion) console.log(`   Suggestion: ${issue.suggestion}`);
+            if (issue.fix) console.log('   (Auto-fix available)');
+          });
+        }
+        
+        logger.endCall(true);
+        
+        // Trigger analysis asynchronously
+        setTimeout(() => {
+          const analyzer = new RecordAnalyzer('code-review');
+          analyzer.analyze();
+        }, 0);
+        
+      } catch (e) {
+        logger.logStep(`Error: ${e.message}`);
+        logger.endCall(false, e.message);
       }
-      
-      logger.endCall(true);
-      
-      // Trigger analysis asynchronously
-      setTimeout(() => {
-        const analyzer = new RecordAnalyzer('code-review');
-        analyzer.analyze();
-      }, 0);
-      
-    } catch (e) {
-      logger.logStep(`Error: ${e.message}`);
-      logger.endCall(false, e.message);
     }
     break;
 
@@ -136,30 +138,32 @@ switch (command) {
       console.error('Usage: node code-fixer.js fix <file>');
       process.exit(1);
     }
-    const logger = new RecordLogger('code-review');
-    logger.startCall('fix', { file });
-    
-    try {
-      console.log(`Fixing ${file}...`);
-      logger.logStep('Starting fix');
-      const issues = checkCommonIssues(file);
-      logger.logStep(`Found ${issues.length} issues`);
+    {
+      const logger = new RecordLogger('code-review');
+      logger.startCall('fix', { file });
       
-      issues.forEach(issue => {
-        if (issue.fix) issue.fix();
-      });
-      
-      logger.endCall(true);
-      
-      // Trigger analysis asynchronously
-      setTimeout(() => {
-        const analyzer = new RecordAnalyzer('code-review');
-        analyzer.analyze();
-      }, 0);
-      
-    } catch (e) {
-      logger.logStep(`Error: ${e.message}`);
-      logger.endCall(false, e.message);
+      try {
+        console.log(`Fixing ${file}...`);
+        logger.logStep('Starting fix');
+        const issues = checkCommonIssues(file);
+        logger.logStep(`Found ${issues.length} issues`);
+        
+        issues.forEach(issue => {
+          if (issue.fix) issue.fix();
+        });
+        
+        logger.endCall(true);
+        
+        // Trigger analysis asynchronously
+        setTimeout(() => {
+          const analyzer = new RecordAnalyzer('code-review');
+          analyzer.analyze();
+        }, 0);
+        
+      } catch (e) {
+        logger.logStep(`Error: ${e.message}`);
+        logger.endCall(false, e.message);
+      }
     }
     break;
 

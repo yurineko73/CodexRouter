@@ -136,7 +136,7 @@ Examples:
 }
 
 switch (command) {
-  case 'analyze':
+  case 'analyze': {
     const logger = new RecordLogger('doc-analysis');
     logger.startCall('analyze', { docPath });
     
@@ -167,8 +167,9 @@ switch (command) {
       logger.endCall(false, e.message);
     }
     break;
+  }
 
-  case 'fix':
+  case 'fix': {
     const logger = new RecordLogger('doc-analysis');
     logger.startCall('fix', { docPath });
     
@@ -191,8 +192,9 @@ switch (command) {
       logger.endCall(false, e.message);
     }
     break;
+  }
 
-  case 'report':
+  case 'report': {
     const logger = new RecordLogger('doc-analysis');
     logger.startCall('report', { docPath });
     
@@ -215,6 +217,7 @@ switch (command) {
       logger.endCall(false, e.message);
     }
     break;
+  }
 
   default:
     console.error(`Unknown command: ${command}`);
