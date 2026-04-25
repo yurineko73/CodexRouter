@@ -4,7 +4,7 @@
  * Skill Creator - Create and optimize skills
  *
  * Usage:
- *   node creator.js create <skill-name> <description>
+ *   node creator.js create <skill-name> <description> [--with-script]
  *   node creator.js optimize <skill-path>
  *   node creator.js validate <skill-path>
  *   node creator.js list
@@ -12,6 +12,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const RecordLogger = require('../logger/record-logger.js');
+const RecordAnalyzer = require('../logger/record-analyzer.js');
 
 const SKILL_TEMPLATE = `---
 name: {name}
@@ -58,83 +60,41 @@ const TOOL_SCRIPT_TEMPLATE = `#!/usr/bin/env node
 
 const fs = require('fs');
 const path = require('path');
-
-// Record Logger integration
-class RecordLogger {
-  constructor(skillName) {
-    this.skillName = skillName;
-    this.currentCall = null;
-    this.recordsDir = path.join(__dirname, '..', skillName, 'records');
-  }
-
-  startCall(command, args = {}) {
-    this.currentCall = {
-      timestamp: new Date().toISOString(),
-      command,
-      args,
-      steps: [],
-      startTime: Date.now(),
-      skillName: this.skillName
-    };
-    return this.currentCall;
-  }
-
-  logStep(description, data = null) {
-    if (!this.currentCall) return;
-    this.currentCall.steps.push({
-      timeMs: Date.now() - this.currentCall.startTime,
-      description,
-      data
-    });
-  }
-
-  endCall(success, error = null) {
-    if (!this.currentCall) return null;
-    this.currentCall.endTime = Date.now();
-    this.currentCall.durationMs = this.currentCall.endTime - this.currentCall.startTime;
-    this.currentCall.success = success;
-    this.currentCall.error = error;
-    const record = { ...this.currentCall };
-    try {
-      this._saveRecord(record);
-    } catch (e) {
-      console.error(\`Failed to save record: \${e.message}\`);
-    }
-    this.currentCall = null;
-    return record;
-  }
-
-  _saveRecord(record) {
-    if (!fs.existsSync(this.recordsDir)) {
-      fs.mkdirSync(this.recordsDir, { recursive: true });
-    }
-    const fileName = \`call-\${Date.now()}.json\`;
-    const filePath = path.join(this.recordsDir, fileName);
-    fs.writeFileSync(filePath, JSON.stringify(record, null, 2), 'utf8');
-    this.logStep(\`Record saved: \${fileName}\`);
-  }
-}
-
-const logger = new RecordLogger('{skillName}');
+const RecordLogger = require('../logger/record-logger.js');
+const RecordAnalyzer = require('../logger/record-analyzer.js');
 
 // CLI Handler
 function handleCommand(command, args) {
+  const logger = new RecordLogger('{skillName}');
+  const analyzer = new RecordAnalyzer('{skillName}');
+
   logger.startCall(command, args);
+
   try {
     switch (command) {
       case 'check':
-        // TODO: Implement check command
-        logger.logStep('Check completed', { result: 'success' });
+        console.log('Check command - TODO: implement');
+        logger.logStep('Check executed', { command, args });
         break;
       case 'execute':
-        // TODO: Implement execute command
-        logger.logStep('Execute completed', { result: 'success' });
+        console.log('Execute command - TODO: implement');
+        logger.logStep('Execute completed', { command, args });
         break;
       default:
         console.log('Unknown command:', command);
         console.log('Available commands: check, execute');
+        logger.logStep('Unknown command received', { command });
+        logger.endCall(false, 'Unknown command');
+        return;
     }
+
     logger.endCall(true);
+
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      analyzer.analyze();
+    }, 0);
+
   } catch (error) {
     logger.endCall(false, error.message);
     console.error('Error:', error.message);
@@ -161,7 +121,7 @@ handleCommand(command, args);
 
 const RECORDS_GITIGNORE_TEMPLATE = `# Skill records
 *.json
-!\.gitignore
+!.gitignore
 `;
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
@@ -211,180 +171,277 @@ function validateFrontmatter(content) {
   };
 }
 
-function createSkill(skillName, description) {
-  const result = validateSkillName(skillName);
-  if (!result.valid) {
-    console.error('Error:', result.error);
-    process.exit(1);
+function createSkill(skillName, description, options = {}) {
+  const logger = new RecordLogger('skill-creator');
+  const analyzer = new RecordAnalyzer('skill-creator');
+
+  logger.startCall('create', { skillName, description, options });
+
+  try {
+    const result = validateSkillName(skillName);
+    if (!result.valid) {
+      logger.endCall(false, result.error);
+      console.error('Error:', result.error);
+      process.exit(1);
+    }
+
+    const skillDir = path.join(__dirname, '..', skillName);
+    const skillFile = path.join(skillDir, 'SKILL.md');
+    const recordsDir = path.join(skillDir, 'records');
+    const gitignoreFile = path.join(recordsDir, '.gitignore');
+
+    if (fs.existsSync(skillDir)) {
+      const error = `Skill "${skillName}" already exists`;
+      logger.endCall(false, error);
+      console.error(`Error: ${error}`);
+      process.exit(1);
+    }
+
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.mkdirSync(recordsDir, { recursive: true });
+
+    const content = SKILL_TEMPLATE
+      .replace('{name}', skillName)
+      .replace('{description}', description);
+
+    fs.writeFileSync(skillFile, content, 'utf8');
+    fs.writeFileSync(gitignoreFile, RECORDS_GITIGNORE_TEMPLATE, 'utf8');
+
+    const files = [skillFile, gitignoreFile];
+
+    // Create tool script if requested
+    if (options.withScript) {
+      const scriptFile = path.join(skillDir, `${skillName}.js`);
+      const scriptContent = TOOL_SCRIPT_TEMPLATE.replace(/\{skillName\}/g, skillName);
+      fs.writeFileSync(scriptFile, scriptContent, 'utf8');
+      files.push(scriptFile);
+      logger.logStep('Tool script created', { scriptFile });
+    }
+
+    logger.logStep('Skill created', { skillName, files });
+
+    console.log(`Created skill: ${skillName}`);
+    console.log(`  - ${skillFile}`);
+    console.log(`  - ${recordsDir}/.gitignore`);
+    if (options.withScript) {
+      console.log(`  - ${skillDir}/${skillName}.js`);
+    }
+
+    logger.endCall(true);
+
+    // Trigger analysis asynchronously
+    setTimeout(() => {
+      analyzer.analyze();
+    }, 0);
+
+  } catch (error) {
+    logger.endCall(false, error.message);
+    console.error('Error:', error.message);
+    throw error;
   }
-
-  const skillDir = path.join(__dirname, '..', skillName);
-  const skillFile = path.join(skillDir, 'SKILL.md');
-  const recordsDir = path.join(skillDir, 'records');
-  const gitignoreFile = path.join(recordsDir, '.gitignore');
-
-  if (fs.existsSync(skillDir)) {
-    console.error(`Error: Skill "${skillName}" already exists at ${skillDir}`);
-    process.exit(1);
-  }
-
-  fs.mkdirSync(skillDir, { recursive: true });
-  fs.mkdirSync(recordsDir, { recursive: true });
-
-  const content = SKILL_TEMPLATE
-    .replace('{name}', skillName)
-    .replace('{description}', description);
-
-  fs.writeFileSync(skillFile, content, 'utf8');
-  fs.writeFileSync(gitignoreFile, RECORDS_GITIGNORE_TEMPLATE, 'utf8');
-
-  console.log(`Created skill: ${skillName}`);
-  console.log(`  - ${skillFile}`);
-  console.log(`  - ${recordsDir}/.gitignore`);
 }
 
 function optimizeSkill(skillPath) {
-  let fullPath = skillPath;
-  if (!skillPath.includes('SKILL.md')) {
-    fullPath = path.join(skillPath, 'SKILL.md');
-  }
+  const logger = new RecordLogger('skill-creator');
+  const analyzer = new RecordAnalyzer('skill-creator');
 
-  if (!fs.existsSync(fullPath)) {
-    console.error(`Error: SKILL.md not found at ${fullPath}`);
-    process.exit(1);
-  }
+  logger.startCall('optimize', { skillPath });
 
-  const content = fs.readFileSync(fullPath, 'utf8');
-  const validation = validateFrontmatter(content);
+  try {
+    let fullPath = skillPath;
+    if (!skillPath.includes('SKILL.md')) {
+      fullPath = path.join(skillPath, 'SKILL.md');
+    }
 
-  if (!validation.valid) {
-    console.error('Validation Error:', validation.error);
-    process.exit(1);
-  }
+    if (!fs.existsSync(fullPath)) {
+      const error = `SKILL.md not found at ${fullPath}`;
+      logger.endCall(false, error);
+      console.error(`Error: ${error}`);
+      process.exit(1);
+    }
 
-  const lines = content.split('\n');
-  let lineCount = lines.length;
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const validation = validateFrontmatter(content);
 
-  console.log(`Optimizing: ${validation.name}`);
-  console.log(`  Current lines: ${lineCount}`);
-  console.log(`  Description: ${validation.description}`);
+    if (!validation.valid) {
+      logger.endCall(false, validation.error);
+      console.error('Validation Error:', validation.error);
+      process.exit(1);
+    }
 
-  // Check if already optimized
-  const hasWhatIDo = content.includes('## What I do');
-  const hasWhenToUseMe = content.includes('## When to use me');
+    const lines = content.split('\n');
+    const lineCount = lines.length;
 
-  if (hasWhatIDo && hasWhenToUseMe) {
-    console.log('  Status: Already optimized (has What I do / When to use me)');
-  } else {
-    console.log('  Status: Needs optimization');
-    console.log('  Hint: Add "## What I do" and "## When to use me" sections');
-  }
+    console.log(`Optimizing: ${validation.name}`);
+    console.log(`  Current lines: ${lineCount}`);
+    console.log(`  Description: ${validation.description}`);
 
-  // Estimate reduction
-  if (lineCount > 100) {
-    const estimatedReduction = Math.round((lineCount - 100) / lineCount * 100);
-    console.log(`  Suggestion: Can reduce by ~${estimatedReduction}% (target: <100 lines)`);
-  } else {
-    console.log(`  Status: Within target range (<100 lines)`);
+    const hasWhatIDo = content.includes('## What I do');
+    const hasWhenToUseMe = content.includes('## When to use me');
+
+    if (hasWhatIDo && hasWhenToUseMe) {
+      console.log('  Status: Already optimized (has What I do / When to use me)');
+      logger.logStep('Already optimized', { skillName: validation.name, lineCount });
+    } else {
+      console.log('  Status: Needs optimization');
+      console.log('  Hint: Add "## What I do" and "## When to use me" sections');
+      logger.logStep('Needs optimization', { skillName: validation.name, lineCount });
+    }
+
+    if (lineCount > 100) {
+      const estimatedReduction = Math.round((lineCount - 100) / lineCount * 100);
+      console.log(`  Suggestion: Can reduce by ~${estimatedReduction}% (target: <100 lines)`);
+    } else {
+      console.log(`  Status: Within target range (<100 lines)`);
+    }
+
+    logger.endCall(true);
+
+    setTimeout(() => {
+      analyzer.analyze();
+    }, 0);
+
+  } catch (error) {
+    logger.endCall(false, error.message);
+    console.error('Error:', error.message);
+    throw error;
   }
 }
 
 function validateSkill(skillPath) {
-  let fullPath = skillPath;
-  if (!skillPath.includes('SKILL.md')) {
-    fullPath = path.join(skillPath, 'SKILL.md');
-  }
+  const logger = new RecordLogger('skill-creator');
+  const analyzer = new RecordAnalyzer('skill-creator');
 
-  if (!fs.existsSync(fullPath)) {
-    console.error(`Error: SKILL.md not found at ${fullPath}`);
-    process.exit(1);
-  }
+  logger.startCall('validate', { skillPath });
 
-  const content = fs.readFileSync(fullPath, 'utf8');
-  const validation = validateFrontmatter(content);
+  try {
+    let fullPath = skillPath;
+    if (!skillPath.includes('SKILL.md')) {
+      fullPath = path.join(skillPath, 'SKILL.md');
+    }
 
-  console.log(`Validating: ${fullPath}`);
-  console.log('');
+    if (!fs.existsSync(fullPath)) {
+      const error = `SKILL.md not found at ${fullPath}`;
+      logger.endCall(false, error);
+      console.error(`Error: ${error}`);
+      process.exit(1);
+    }
 
-  if (validation.valid) {
-    console.log('✅ Frontmatter valid');
-    console.log(`  Name: ${validation.name}`);
-    console.log(`  Description: ${validation.description}`);
-    console.log(`  Body length: ${validation.bodyLength} chars`);
-  } else {
-    console.log('❌ Frontmatter invalid');
-    console.log(`  Error: ${validation.error}`);
-    process.exit(1);
-  }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const validation = validateFrontmatter(content);
 
-  // Check structure
-  const hasWhatIDo = content.includes('## What I do');
-  const hasWhenToUseMe = content.includes('## When to use me');
+    console.log(`Validating: ${fullPath}`);
+    console.log('');
 
-  console.log('');
-  if (hasWhatIDo && hasWhenToUseMe) {
-    console.log('✅ Structure: Optimized format');
-  } else {
-    console.log('⚠️  Structure: Not optimized (missing What I do / When to use me)');
-  }
+    if (validation.valid) {
+      console.log('✅ Frontmatter valid');
+      console.log(`  Name: ${validation.name}`);
+      console.log(`  Description: ${validation.description}`);
+      console.log(`  Body length: ${validation.bodyLength} chars`);
+      logger.logStep('Validation passed', { skillName: validation.name });
+    } else {
+      console.log('❌ Frontmatter invalid');
+      console.log(`  Error: ${validation.error}`);
+      logger.endCall(false, validation.error);
+      process.exit(1);
+    }
 
-  // Check line count
-  const lines = content.split('\n').length;
-  console.log('');
-  if (lines > 150) {
-    console.log(`⚠️  Length: ${lines} lines (consider reducing)`);
-  } else if (lines > 100) {
-    console.log(`⚠️  Length: ${lines} lines (target: <100)`);
-  } else {
-    console.log(`✅ Length: ${lines} lines`);
+    const hasWhatIDo = content.includes('## What I do');
+    const hasWhenToUseMe = content.includes('## When to use me');
+
+    console.log('');
+    if (hasWhatIDo && hasWhenToUseMe) {
+      console.log('✅ Structure: Optimized format');
+    } else {
+      console.log('⚠️  Structure: Not optimized (missing What I do / When to use me)');
+    }
+
+    const lines = content.split('\n').length;
+    console.log('');
+    if (lines > 150) {
+      console.log(`⚠️  Length: ${lines} lines (consider reducing)`);
+    } else if (lines > 100) {
+      console.log(`⚠️  Length: ${lines} lines (target: <100)`);
+    } else {
+      console.log(`✅ Length: ${lines} lines`);
+    }
+
+    logger.endCall(true);
+
+    setTimeout(() => {
+      analyzer.analyze();
+    }, 0);
+
+  } catch (error) {
+    logger.endCall(false, error.message);
+    console.error('Error:', error.message);
+    throw error;
   }
 }
 
 function listSkills() {
-  const skillsDir = path.join(__dirname, '..');
-  const dirs = fs.readdirSync(skillsDir)
-    .filter(f => {
-      const stat = fs.statSync(path.join(skillsDir, f));
-      return stat.isDirectory() && !f.startsWith('.');
-    })
-    .filter(f => {
-      return fs.existsSync(path.join(skillsDir, f, 'SKILL.md'));
+  const logger = new RecordLogger('skill-creator');
+
+  logger.startCall('list', {});
+
+  try {
+    const skillsDir = path.join(__dirname, '..');
+    const dirs = fs.readdirSync(skillsDir)
+      .filter(f => {
+        const stat = fs.statSync(path.join(skillsDir, f));
+        return stat.isDirectory() && !f.startsWith('.');
+      })
+      .filter(f => {
+        return fs.existsSync(path.join(skillsDir, f, 'SKILL.md'));
+      });
+
+    console.log('Available skills:');
+    dirs.forEach(dir => {
+      const skillFile = path.join(skillsDir, dir, 'SKILL.md');
+      const content = fs.readFileSync(skillFile, 'utf8');
+      const match = content.match(DESCRIPTION_REGEX);
+      const desc = match ? match[1].substring(0, 60) + '...' : 'No description';
+      console.log(`  ${dir}`);
+      console.log(`    ${desc}`);
     });
 
-  console.log('Available skills:');
-  dirs.forEach(dir => {
-    const skillFile = path.join(skillsDir, dir, 'SKILL.md');
-    const content = fs.readFileSync(skillFile, 'utf8');
-    const match = content.match(DESCRIPTION_REGEX);
-    const desc = match ? match[1].substring(0, 60) + '...' : 'No description';
-    console.log(`  ${dir}`);
-    console.log(`    ${desc}`);
-  });
+    logger.logStep('Listed skills', { count: dirs.length });
+    logger.endCall(true);
+
+  } catch (error) {
+    logger.endCall(false, error.message);
+    console.error('Error:', error.message);
+    throw error;
+  }
 }
 
 // Main CLI
 const action = process.argv[2];
 
 switch (action) {
-  case 'create':
+  case 'create': {
     const skillName = process.argv[3];
     const description = process.argv[4] || 'Skill description';
+    const withScript = process.argv.includes('--with-script');
     if (!skillName) {
-      console.error('Usage: creator.js create <skill-name> [description]');
+      console.error('Usage: creator.js create <skill-name> [description] [--with-script]');
       process.exit(1);
     }
-    createSkill(skillName, description);
+    createSkill(skillName, description, { withScript });
     break;
+  }
 
-  case 'optimize':
+  case 'optimize': {
     const optimizePath = process.argv[3] || '.';
     optimizeSkill(optimizePath);
     break;
+  }
 
-  case 'validate':
+  case 'validate': {
     const validatePath = process.argv[3] || '.';
     validateSkill(validatePath);
     break;
+  }
 
   case 'list':
     listSkills();
@@ -395,13 +452,14 @@ switch (action) {
     console.log('Skill Creator - Create and optimize skills');
     console.log('');
     console.log('Usage:');
-    console.log('  creator.js create <name> [description]  Create new skill');
-    console.log('  creator.js optimize [path]             Optimize existing skill');
-    console.log('  creator.js validate [path]             Validate skill format');
-    console.log('  creator.js list                       List all skills');
+    console.log('  creator.js create <name> [description] [--with-script]  Create new skill');
+    console.log('  creator.js optimize [path]                         Optimize existing skill');
+    console.log('  creator.js validate [path]                         Validate skill format');
+    console.log('  creator.js list                                  List all skills');
     console.log('');
     console.log('Examples:');
     console.log('  creator.js create my-skill "My skill description"');
+    console.log('  creator.js create my-skill "Description" --with-script');
     console.log('  creator.js optimize ../other-skill');
     console.log('  creator.js validate ./my-skill');
 }
