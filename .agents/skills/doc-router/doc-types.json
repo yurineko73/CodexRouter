@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "types": [
+    {
+      "id": "plans",
+      "description": "项目计划、路线图、阶段性方案",
+      "keywords": ["plan", "roadmap", "milestone", "计划", "方案"],
+      "targetDir": "doc/plans"
+    },
+    {
+      "id": "api-reference",
+      "description": "API 参考文档、SDK 说明",
+      "keywords": ["api", "reference", "sdk", "endpoint", "rest", "接口", "参考"],
+      "targetDir": "doc/api/tools"
+    },
+    {
+      "id": "skill-dev",
+      "description": "Skill 开发指南、技能模板、技能说明",
+      "keywords": ["skill", "guide", "tutorial", "development", "技能", "开发"],
+      "targetDir": "doc/skills"
+    }
+  ]
+}

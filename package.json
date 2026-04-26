@@ -13,7 +13,11 @@
     "fix:convert": "node .opencode/skills/git-operations/git-helper.js",
     "fix:clean": "bash .opencode/skills/file-cleanup/cleanup-script.sh .",
     "log:check": "node .opencode/skills/logger/record-logger.js",
-    "doc:fix": "node .opencode/skills/doc-analysis/doc-fixer.js"
+    "doc:fix": "node .opencode/skills/doc-analysis/doc-fixer.js",
+    "agents:doc-router": "node .agents/skills/doc-router/doc-router.js",
+    "agents:api-docs": "node .agents/skills/api-docs/api-validator.js",
+    "agents:doc-analysis": "node .agents/skills/doc-analysis/doc-fixer.js",
+    "agents:skill-creator": "node .agents/skills/skill-creator/creator.js"
   },
   "keywords": [
     "codex",
